@@ -1,8 +1,7 @@
 from dotenv import load_dotenv
 import os
-from telegram.ext import CommandHandler, MessageHandler, Updater, Filters
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
-from handlers import start, echo
+from telegram.ext import Updater
+from handlers import get_conversation_handler
 
 
 def main():
@@ -11,10 +10,7 @@ def main():
 
     updater = Updater(token, use_context=True)
     dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
-
+    dp.add_handler(get_conversation_handler())
     updater.start_polling()
     updater.idle()
 
