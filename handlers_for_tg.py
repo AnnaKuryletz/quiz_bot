@@ -1,3 +1,6 @@
+import random
+from enum import Enum, auto
+
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ConversationHandler,
@@ -6,10 +9,9 @@ from telegram.ext import (
     Filters,
     CallbackContext,
 )
-import random
+
 import questions
 from redis_utils import save_question, get_question
-from enum import Enum, auto
 
 
 class States(Enum):
@@ -20,6 +22,13 @@ class States(Enum):
 def normalize_answer(answer: str) -> str:
     answer = answer.split('.')[0].split('(')[0]
     return answer.strip().lower()
+
+
+def send_new_question(update: Update, user_id: int) -> States:
+    question = random.choice(list(questions.qa_dict.keys()))
+    save_question(user_id, question)
+    update.message.reply_text(question)
+    return States.ANSWERING
 
 
 def start(update: Update, context: CallbackContext):
@@ -34,43 +43,35 @@ def start(update: Update, context: CallbackContext):
 
 def handle_new_question_request(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    question = random.choice(list(questions.qa_dict.keys()))
-    save_question(user_id, question)
-    update.message.reply_text(question)
-    return States.ANSWERING
-
-
-def handle_solution_attempt(update: Update, context: CallbackContext):
-    user_id = update.effective_user.id
-    user_answer = update.message.text.strip()
-
-    question = get_question(user_id)
-
-    correct_answer = questions.qa_dict.get(question)
-    if not correct_answer:
-        update.message.reply_text("Ошибка: вопрос не найден.")
-        return States.NEW_QUESTION
-
-    if normalize_answer(user_answer) == normalize_answer(correct_answer):
-        update.message.reply_text(
-            "Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»"
-        )
-        save_question(user_id, "")
-        return States.NEW_QUESTION
-    else:
-        update.message.reply_text("Неправильно… Попробуешь ещё раз?")
-        return States.ANSWERING
+    return send_new_question(update, user_id)
 
 
 def handle_give_up(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     question = get_question(user_id)
-    if question:
-        answer = questions.qa_dict.get(question)
+
+    if question and (answer := questions.qa_dict.get(question)):
         update.message.reply_text(f"Ответ: {answer}")
     else:
         update.message.reply_text("Вопрос не найден. Нажмите 'Новый вопрос'.")
-    return States.NEW_QUESTION
+
+    return send_new_question(update, user_id)
+
+
+def handle_solution_attempt(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    question = get_question(user_id)
+    correct_answer = questions.qa_dict.get(question)
+
+    user_answer = normalize_answer(update.message.text.strip())
+    if user_answer == normalize_answer(correct_answer):
+        update.message.reply_text(
+            "Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»")
+        save_question(user_id, "")
+        return States.NEW_QUESTION
+
+    update.message.reply_text("Неправильно… Попробуешь ещё раз?")
+    return States.ANSWERING
 
 
 def handle_score(update: Update, context: CallbackContext):
@@ -89,6 +90,8 @@ def get_conversation_handler():
             ],
             States.ANSWERING: [
                 MessageHandler(Filters.regex("^Сдаться$"), handle_give_up),
+                MessageHandler(Filters.regex("^Мой счёт$"),
+                               handle_score),
                 MessageHandler(
                     Filters.text & ~Filters.regex(
                         "^(Новый вопрос|Сдаться|Мой счёт)$"),

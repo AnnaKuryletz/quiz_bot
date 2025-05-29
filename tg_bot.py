@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from telegram.ext import Updater
-from handlers import get_conversation_handler
+from handlers_for_tg import get_conversation_handler
 
 
 def main():
