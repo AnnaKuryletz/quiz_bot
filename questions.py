@@ -1,15 +1,14 @@
 import re
 
 
-questions_dict = {}
+def load_questions_from_file(file_path: str, encoding: str = "KOI8-R") -> dict:
+    with open(file_path, "r", encoding=encoding) as file:
+        content = file.read()
 
-with open("quiz-questions/1vs1200.txt", "r", encoding="KOI8-R") as my_file:
-    file_contents = my_file.read()
+    question_answer_pairs = re.findall(
+        r'Вопрос\s*\d*:\s*(.*?)\s*Ответ:\s*(.*?)\s*(?:Автор:|Источник:|$)',
+        content,
+        re.DOTALL
+    )
 
-questions_pairs = re.findall(
-    r'Вопрос\s*\d*:\s*(.*?)\s*Ответ:\s*(.*?)\s*(?:Автор:|Источник:|$)',
-    file_contents,
-    re.DOTALL
-)
-
-qa_dict = {q.strip(): a.strip() for q, a in questions_pairs}
+    return {q.strip(): a.strip() for q, a in question_answer_pairs}

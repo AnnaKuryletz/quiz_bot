@@ -1,16 +1,12 @@
-import os
-
-from dotenv import load_dotenv
 import redis
 
 
 def connect_to_db():
-    load_dotenv()
     db = redis.Redis(
-        host=os.getenv("REDIS_DATABASE_URL"),
-        port=int(os.getenv("REDIS_PORT")),
+        host='redis-18067.c278.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=18067,
         decode_responses=True,
         username="default",
-        password=os.getenv("REDIS_PASSWORD"),
+        password="IiRi8LBcDfYOho0qeFP6eJSA2hEXRLP6",
     )
     return db

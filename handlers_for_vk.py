@@ -1,13 +1,8 @@
 import json
 import random
 
-import questions
 from redis_utils import save_question, get_question
-
-
-def normalize_answer(answer: str) -> str:
-    answer = answer.split('.')[0].split('(')[0]
-    return answer.strip().lower()
+from quiz_utils import normalize_answer
 
 
 def send_keyboard(vk_api, user_id, message):
@@ -27,24 +22,24 @@ def send_keyboard(vk_api, user_id, message):
     )
 
 
-def handle_message(event, vk_api):
+def handle_message(event, vk_api, questions: dict, redis_conn):
     user_id = event.user_id
     text = event.text.strip()
 
     if text == "/start":
         send_keyboard(vk_api, user_id, "Здравствуйте!")
     elif text == "Новый вопрос":
-        question = random.choice(list(questions.qa_dict.keys()))
-        save_question(user_id, question)
+        question = random.choice(list(questions.keys()))
+        save_question(redis_conn, user_id, question, "vk")
         vk_api.messages.send(
             user_id=user_id,
             message=question,
             random_id=random.randint(1, 100000)
         )
     elif text == "Сдаться":
-        question = get_question(user_id)
+        question = get_question(redis_conn, user_id, "vk")
         if question:
-            answer = questions.qa_dict.get(question)
+            answer = questions.get(question)
             vk_api.messages.send(
                 user_id=user_id,
                 message=f"Ответ: {answer}",
@@ -56,8 +51,8 @@ def handle_message(event, vk_api):
                 message="Вопрос не найден. Нажмите 'Новый вопрос'.",
                 random_id=random.randint(1, 100000)
             )
-        new_question = random.choice(list(questions.qa_dict.keys()))
-        save_question(user_id, new_question)
+        new_question = random.choice(list(questions.keys()))
+        save_question(redis_conn, user_id, question, "vk")
         vk_api.messages.send(
             user_id=user_id,
             message=f"Новый вопрос: {new_question}",
@@ -70,8 +65,8 @@ def handle_message(event, vk_api):
             random_id=random.randint(1, 100000)
         )
     else:
-        question = get_question(user_id)
-        correct_answer = questions.qa_dict.get(question)
+        question = get_question(redis_conn, user_id, "vk")
+        correct_answer = questions.get(question)
         if not correct_answer:
             vk_api.messages.send(
                 user_id=user_id,
@@ -85,7 +80,7 @@ def handle_message(event, vk_api):
                 message="Правильно! Поздравляю! Нажми «Новый вопрос» для следующего.",
                 random_id=random.randint(1, 100000)
             )
-            save_question(user_id, "")
+            save_question(redis_conn, user_id, "vk")
         else:
             vk_api.messages.send(
                 user_id=user_id,

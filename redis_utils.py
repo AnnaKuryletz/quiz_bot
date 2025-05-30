@@ -1,11 +1,8 @@
-from redis_connect import connect_to_db
-
-redis_db = connect_to_db()
-
-
-def save_question(user_id: int, question: str):
-    redis_db.set(f"user:{user_id}:question", question)
+def save_question(redis_conn, user_id: int, question: str, platform_prefix: str):
+    key = f"{platform_prefix}:user:{user_id}:question"
+    redis_conn.set(key, question)
 
 
-def get_question(user_id: int):
-    return redis_db.get(f"user:{user_id}:question")
+def get_question(redis_conn, user_id: int, platform_prefix: str):
+    key = f"{platform_prefix}:user:{user_id}:question"
+    return redis_conn.get(key)
