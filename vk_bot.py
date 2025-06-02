@@ -1,5 +1,5 @@
 import os
-
+import argparse
 from dotenv import load_dotenv
 import vk_api as vk
 from vk_api.longpoll import VkLongPoll, VkEventType
@@ -11,7 +11,16 @@ from redis_connect import connect_to_db
 
 def main():
     load_dotenv()
-    questions = load_questions_from_file("quiz-questions/1vs1200.txt")
+
+    parser = argparse.ArgumentParser(description="Запуск VK бота-викторины")
+    parser.add_argument(
+        "--questions",
+        help="Путь к файлу с вопросами",
+        default=os.getenv("QUESTIONS_FILE", "quiz-questions/1vs1200.txt")
+    )
+    args = parser.parse_args()
+
+    questions = load_questions_from_file(args.questions)
     redis_conn = connect_to_db()
 
     vk_token = os.environ["VK_API_KEY"]

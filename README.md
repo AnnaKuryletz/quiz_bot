@@ -64,6 +64,11 @@ pip install -r requirements.txt
 ```env
 TELEGRAM_BOT_TOKEN=ваш_токен_телеграм_бота
 VK_API_KEY=ваш_токен_вк_бота
+REDIS_PORT=порт_на_Redis
+REDIS_PASSWORD=пароль_на_Redis
+REDIS_HOST=хост_на_Redis
+REDIS_USERNAME=имя_пользователя_на_Redis
+QUESTIONS_FILE=путь_к_файлам_с_вопросами
 ```
 
 5. Запустите Redis сервер (если локально) или настройте доступ к удалённому Redis(файл `redis_connect.py` предназначен для удалённого подключения).
@@ -78,6 +83,43 @@ python tg_bot.py
 
 ```bash
 python vk_bot.py
+```
+
+## Настройка пути к файлу с вопросами
+
+Файл с викторинами `(.txt)` можно задавать без изменения кода. Это удобно при тестировании и развертывании в разных окружениях.
+
+### Способы настройки
+
+1. Через аргумент командной строки
+   Укажите путь при запуске бота:
+
+Telegram бот:
+
+```bash
+python tg_bot.py --questions path/to/your_questions.txt
+```
+
+VK бот:
+
+```bash
+python vk_bot.py --questions path/to/your_questions.txt
+```
+
+2. Через переменную окружения
+   Добавьте переменную в `.env` файл:
+
+```env
+QUESTIONS_FILE=path/to/your_questions.txt
+```
+
+Бот автоматически подхватит эту настройку при запуске.
+
+3. Умолчание
+   Если не указано ничего, используется стандартный файл:
+
+```text
+quiz-questions/1vs1200.txt
 ```
 
 ## Структура проекта
