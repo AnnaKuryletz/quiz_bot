@@ -21,7 +21,18 @@ def main():
     args = parser.parse_args()
 
     questions = load_questions_from_file(args.questions)
-    redis_conn = connect_to_db()
+
+    redis_host = os.environ["REDIS_DATABASE_URL"]
+    redis_port = int(os.environ["REDIS_PORT"])
+    redis_user = os.getenv("REDIS_USERNAME", "default")
+    redis_password = os.environ["REDIS_PASSWORD"]
+
+    redis_conn = connect_to_db(
+        host=redis_host,
+        port=redis_port,
+        username=redis_user,
+        password=redis_password,
+    )
 
     vk_token = os.environ["VK_API_KEY"]
     vk_session = vk.VkApi(token=vk_token)
